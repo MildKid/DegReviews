@@ -7,7 +7,7 @@ import webbrowser
 from langdetect import detect  # Import the langdetect library for language detection
 
 # Create a connection to the SQLite database
-conn = sqlite3.connect("reviews.db")
+conn = sqlite3.connect("/data/reviews.db")
 # Create a cursor object to execute SQL commands
 cursor = conn.cursor()
 
