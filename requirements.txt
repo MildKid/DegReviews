@@ -1,0 +1,7 @@
+streamlit
+sqlite3
+extra-streamlit-components
+uuid
+langdetect
+webbrowser
+datetime
