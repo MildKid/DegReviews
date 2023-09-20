@@ -77,7 +77,7 @@ def main():
             break
 
     # Set the title with the current mealtime
-    st.title(f"Submit a Review for {current_meal} Meal")
+    st.title(f"Submit a Review for {current_meal} Meal at {datetime.datetime.now().time()}")
 
     # Generate a UUID for the user if not already assigned
     if user_uuid is None:
