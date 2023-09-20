@@ -119,7 +119,7 @@ def main():
                 return
 
             # Validate input length
-            if len(liked) < 24 or len(disliked) < 10:
+            if len(liked) < 9 or len(disliked) < 9:
                 st.error("Your feedback must be at least 10 characters long.")
                 return
 
