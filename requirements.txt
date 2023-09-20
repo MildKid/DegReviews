@@ -2,3 +2,4 @@ extra_streamlit_components==0.1.60
 langdetect==1.0.9
 matplotlib==3.8.0
 streamlit==1.26.0
+pytz

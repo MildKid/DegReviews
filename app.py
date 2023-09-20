@@ -28,7 +28,7 @@ cursor.execute('''
 # Define the meal schedule
 meal_schedule = {
     "Breakfast": {
-        "Mon - Fri": ["7:00AM", "10:09AM"],
+        "Mon - Fri": ["12:00AM", "10:09AM"],
         "Sat - Sun": ["8:00AM", "10:09AM"]
     },
     "Lunch": {
@@ -38,7 +38,7 @@ meal_schedule = {
         "Mon - Fri": ["1:30PM", "2:09PM"]
     },
     "Dinner": {
-        "Mon - Thu": ["3:07PM", "7:20PM"],
+        "Mon - Thu": ["3:07PM", "11:59PM"],
         "Fri": ["4:00PM", "7:09PM"],
         "Sat - Sun": ["4:30PM", "7:09PM"]
     }
