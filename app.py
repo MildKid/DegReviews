@@ -4,6 +4,7 @@ import extra_streamlit_components as stx
 import datetime
 import uuid
 import webbrowser
+import pytz  # Import the pytz library for time zone handling
 from langdetect import detect  # Import the langdetect library for language detection
 
 # Create a connection to the SQLite database
@@ -43,9 +44,12 @@ meal_schedule = {
     }
 }
 
-# Create a function to check mealtime
+# Define the Eastern Standard Time (EST) timezone
+est = pytz.timezone('US/Eastern')
+
+# Create a function to check mealtime with the EST timezone
 def is_mealtime(meal):
-    current_time = datetime.datetime.now().time()
+    current_time = datetime.datetime.now(est).time()
     if meal in meal_schedule:
         for days, times in meal_schedule[meal].items():
             start_time = datetime.datetime.strptime(times[0], "%I:%M%p").time()
@@ -77,7 +81,7 @@ def main():
             break
 
     # Set the title with the current mealtime
-    st.title(f"Submit a Review for {current_meal} Meal at {datetime.datetime.now().time()}")
+    st.title(f"Submit a Review for {current_meal} Meal at {datetime.datetime.now(est).time()}")
 
     # Generate a UUID for the user if not already assigned
     if user_uuid is None:
@@ -135,7 +139,7 @@ def main():
                 return
 
             # Get the current date and time
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            timestamp = datetime.datetime.now(est).strftime("%Y-%m-%d %H:%M:%S")
 
             # Store the data in the database, including the user UUID, meal, and timestamp
             cursor.execute("INSERT INTO reviews (user_uuid, timestamp, meal, rating, liked, disliked) VALUES (?, ?, ?, ?, ?, ?)",
