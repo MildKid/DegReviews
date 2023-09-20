@@ -7,6 +7,16 @@ import webbrowser
 import pytz  # Import the pytz library for time zone handling
 from langdetect import detect  # Import the langdetect library for language detection
 
+st.set_page_config(
+    page_title="Deg Reviews",
+    page_icon="https://lh4.googleusercontent.com/vFh11InO6vKs937-RrKl6LopZd2YHWnucG02QXa_YA5Fbh-lrs2C0SrYz2XQfSmjL5uKs-spaq0G4nIJzR5ZNkg=w16383",
+    layout="centered",
+    initial_sidebar_state="collapsed",
+    menu_items={
+        'OurSU': 'https://oursu.susqu.org'
+    }
+)
+
 # Create a connection to the SQLite database
 conn = sqlite3.connect("/data/reviews.db")
 # Create a cursor object to execute SQL commands
