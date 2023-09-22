@@ -2,6 +2,8 @@ import streamlit as st
 import sqlite3
 import extra_streamlit_components as stx
 import datetime
+import pytz
+import uuid  # Import the UUID module
 
 st.set_page_config(
     page_title="Deg Reviews",
@@ -9,13 +11,14 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="collapsed",
     menu_items={
-        'About': "# Built by OurSU."
+        'About': "# Built by [OurSU](oursu.susqu.org)"
     }
 )
 
-# Create a connection to the SQLite database
-conn = sqlite3.connect("/data/reviews.db")
-#conn = sqlite3.connect("reviews.db")
+
+# Create a connection to the SQLite database:
+#conn = sqlite3.connect("/data/reviews.db") #Prod
+conn = sqlite3.connect("reviews.db") #Dev
 
 # Create a cursor object to execute SQL commands
 cursor = conn.cursor()
@@ -33,35 +36,42 @@ cursor.execute('''
     )
 ''')
 
+#Set Time Zone
+est = pytz.timezone('US/Eastern')
+
 # Define the meal schedule
 meal_schedule = {
     "Breakfast": {
-        "Mon - Fri": ["12:00AM", "10:00AM"],
-        "Sat - Sun": ["8:00AM", "10:00AM"]
+        "Mon - Fri": ["7:00AM", "10:15AM"],
+        "Sat - Sun": ["8:00AM", "10:15AM"]
     },
     "Lunch": {
         "Mon - Sun": ["11:00AM", "1:30PM"]
     },
     "Light Lunch": {
-        "Mon - Fri": ["1:30PM", "2:00PM"]
+        "Mon - Fri": ["1:30PM", "2:15PM"]
     },
     "Dinner": {
-        "Mon - Thu": ["4:00PM", "7:15PM"],
-        "Fri": ["4:00PM", "7:00PM"],
-        "Sat - Sun": ["4:30PM", "7:00PM"]
+        "Mon - Thu": ["7:00PM", "7:30PM"],
+        "Fri": ["4:00PM", "7:15PM"],
+        "Sat - Sun": ["4:30PM", "7:15PM"]
     }
 }
 
 # Create a function to check mealtime
 def is_mealtime(meal):
-    current_time = datetime.datetime.now().time()
+    current_time = datetime.datetime.now(est).time()
+    print("Current Time:", current_time)
     if meal in meal_schedule:
         for days, times in meal_schedule[meal].items():
             start_time = datetime.datetime.strptime(times[0], "%I:%M%p").time()
             end_time = datetime.datetime.strptime(times[1], "%I:%M%p").time()
+            print(f"Checking {meal} - Start Time: {start_time}, End Time: {end_time}")
             if current_time >= start_time and current_time <= end_time:
                 return True
+                
     return False
+
 
 # Create a function to track user submissions for the day using cookies
 @st.cache_resource(experimental_allow_widgets=True)  # Enable widget replay
@@ -75,15 +85,15 @@ expiration_date_str = expiration_date.isoformat()
 
 cookie_manager = get_cookie_manager()
 
-if not cookie_manager.get("saved_user_uuid"):
-    # Generate a new UUID
-    import uuid  # Import the UUID module
-    new_uuid = str(uuid.uuid4())
-    # Set "user_uuid_cookie" with the new UUID
-    cookie_manager.set("oursu_degreviews_user_uuid", new_uuid, expires_at=expiration_date)
-    
-# Get the value of "user_uuid" from the cookies
-user_uuid = cookie_manager.get("oursu_degreviews_user_uuid")
+def get_user_uuid():
+    user_uuid = cookie_manager.get("oursu_degreviews_user_uuid")
+    if not user_uuid:
+        # Generate a new UUID
+        new_uuid = str(uuid.uuid4())
+        # Set the UUID cookie with a long expiration date
+        cookie_manager.set("oursu_degreviews_user_uuid", new_uuid, expires_at=expiration_date)
+        user_uuid = new_uuid
+    return user_uuid
 
 def main():
 
@@ -95,16 +105,19 @@ def main():
             break
 
     # Set the title with the current mealtime
-    st.title(f"Submit a Review for {current_meal} Meal")
+    if current_meal is None:
+        st.title(f"Submit a Review")
+    else:
+        st.title(f"Submit a Review for {current_meal}!")
 
     # Collect user's rating
     st.subheader("Rate Your Meal Enjoyment")
-    rating = st.slider("Select a rating", 1, 5, 2, key="rating", disabled=not is_mealtime(current_meal))  # Slider from 1 to 5
+    rating = st.slider("Select a rating", 1, 4, 2, key="rating", disabled=not is_mealtime(current_meal))  # Slider from 1 to 4
 
     # Collect user's feedback
     st.subheader("Tell Us What You Liked and Disliked")
-    liked = st.text_area("What did you like about the meal?", key="liked", disabled=not is_mealtime(current_meal))
-    disliked = st.text_area("What did you dislike about the meal?", key="disliked", disabled=not is_mealtime(current_meal))
+    liked = st.text_area("What did you eat that you **enjoyed** and why?", key="liked", disabled=not is_mealtime(current_meal))
+    disliked = st.text_area("What did you eat that you **disliked** and how can it be improved?", key="disliked", disabled=not is_mealtime(current_meal))
 
     # Check if the user has already submitted a review for the current meal
     submitted_for_meal = cookie_manager.get(f"{datetime.date.today()}_{current_meal}")
@@ -114,6 +127,16 @@ def main():
     
     #Session State Debug
     st.write(st.session_state)
+        # Display all cookies for debugging
+    cookies = cookie_manager.get_all()
+    st.write("All Cookies:")
+    st.write(cookies)
+# Other Debug Info
+    st.write("Current Meal: ",{current_meal})
+    st.write("Date: ",{datetime.date.today()})
+    st.write("Datetime: ",{datetime.datetime.now()})
+    st.write("Submitted for meal: ",{submitted_for_meal})
+    st.write("is_mealtime: ", {is_mealtime})
     
     if not is_mealtime(current_meal):
         st.warning("It's not mealtime. You can't submit a review right now.")
@@ -124,7 +147,7 @@ def main():
         if st.button("Submit Review", key="submit"):
 
             # Validate input length
-            if len(liked) < 8 or len(disliked) < 8:
+            if len(liked) < 9 or len(disliked) < 7:
                 st.error("Your feedback must be at least 10 characters long.")
                 return
 
@@ -150,17 +173,6 @@ def main():
             cookie_manager.set(f"{datetime.date.today()}_{current_meal}", "submitted", max_age=72000)
 
             st.success(f"Review submitted successfully for {current_meal} Meal!")
-
-    # Display all cookies for debugging
-        cookies = cookie_manager.get_all()
-        st.write("All Cookies:")
-        st.write(cookies)
-    # Other Debug Info
-        st.write("Current Meal: ",{current_meal})
-        st.write("Date: ",{datetime.date.today()})
-        st.write("Datetime: ",{datetime.datetime.now()})
-        st.write("Submitted for meal: ",{submitted_for_meal})
-        st.write("is_mealtime: ", {is_mealtime})
 
 
 if __name__ == "__main__":
