@@ -6,6 +6,10 @@ import time
 import pytz
 import uuid
 
+#REBUILD COMMAND: sudo docker build --no-cache  -t deg-reviews .
+#RUN COMMAND: sudo docker run --name deg-review-app -p 8501:8501 -v oursu-volume:/data deg-reviews
+
+
 st.set_page_config(
     page_title="Deg Reviews",
     page_icon="https://lh4.googleusercontent.com/e0kLySme0jMVKoZagipGvpe-0kCosciRduao76aJFaEg5rfs0US4ynV470U9vNTZ-w91mAY3dJD3XoSejfrw2us=w16383",
@@ -44,7 +48,7 @@ est = pytz.timezone('US/Eastern')
 # Define the meal schedule
 meal_schedule = {
     "Breakfast": {
-        "Mon - Fri": ["12:00AM", "10:15AM"], #default: 7AM-10:15AM
+        "Mon - Fri": ["7:00AM", "10:15AM"], #default: 7AM-10:15AM
         "Sat - Sun": ["8:00AM", "10:15AM"]
     },
     "Lunch": {
@@ -148,7 +152,7 @@ def main():
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             # Store the data in the database, including the user UUID, meal, and timestamp
-            cursor.execute("INSERT INTO reviews (user_uuid, timestamp, meal, rating, liked, disliked, what_they_ate) VALUES (?, ?, ?, ?, ?, ?)",
+            cursor.execute("INSERT INTO reviews (user_uuid, timestamp, meal, rating, liked, disliked, what_they_ate) VALUES (?, ?, ?, ?, ?, ?, ?)",
                         (user_uuid, timestamp, current_meal, rating, liked, disliked, what_they_ate))
             conn.commit()  # Commit the transaction to save the data
 
