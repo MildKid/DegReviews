@@ -6,8 +6,9 @@ import time
 import pytz
 import uuid
 
-#REBUILD COMMAND: sudo docker build --no-cache  -t deg-reviews .
-#RUN COMMAND: sudo docker run --name deg-review-app -p 8501:8501 -v oursu-volume:/data deg-reviews
+# CD COMMAND cd /var/www/webapps
+# REBUILD COMMAND: sudo docker build --no-cache  -t deg-reviews .
+# RUN COMMAND: sudo docker run --name deg-review-app -p 8501:8501 -v oursu-volume:/data deg-reviews
 
 
 st.set_page_config(
