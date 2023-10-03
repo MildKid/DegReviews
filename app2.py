@@ -12,13 +12,14 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="collapsed",
     menu_items={
-        'About': "# Built by [OurSU](oursu.susqu.org)"
+        'Report a bug': "https://oursu.susqu.org/nav/feedback",
+        'About': "# Built by [OurSU](https://oursu.susqu.org)"
     }
 )
 
 # Create a connection to the SQLite database:
-#conn = sqlite3.connect("/data/reviews.db") #Prod
-conn = sqlite3.connect("reviews.db") #Dev
+conn = sqlite3.connect("/data/reviews.db") #Prod
+#conn = sqlite3.connect("reviews.db") #Dev
 
 # Create a cursor object to execute SQL commands
 cursor = conn.cursor()
@@ -106,11 +107,13 @@ def main():
             current_meal = meal
             break
 
-    # Set the title with the current mealtime
+    # Set the title with the current mealtime. Also handles other text changes.
     if current_meal is None:
         st.title(f"Submit a Review")
+        this_meal = "this meal"
     else:
         st.title(f"Submit a Review for {current_meal}!")
+        this_meal = current_meal.lower()
 
     # Check if a corresponding cookie exists for the current date and meal
     meal_cookie = cookie_manager.get(cookie=f"{datetime.date.today()}_{current_meal}")
@@ -125,18 +128,19 @@ def main():
         st.subheader("Rate Your Meal Enjoyment")
         rating = st.slider("Select a rating", 1, 5, 3, key="rating", disabled=disable_fields)  # Slider from 1 to 5, default 3
         st.subheader("Tell Us About Your Meal")
-        liked = st.text_area("What did you like about the meal?", key="liked", disabled=disable_fields, on_change=None, max_chars=250)
-        disliked = st.text_area("What did you dislike about the meal?", key="disliked", disabled=disable_fields, on_change=None, max_chars=250)
+        what_they_ate = st.text_area(f"Please list what you ate for {this_meal} today in the Dining Hall:", key="what_they_ate", disabled=disable_fields, max_chars=120)
+        liked = st.text_area("What did you like about the meal?", key="liked", disabled=disable_fields, on_change=None, max_chars=260)
+        disliked = st.text_area("What did you dislike about the meal?", key="disliked", disabled=disable_fields, on_change=None, max_chars=260)
         
         submitted = st.form_submit_button(label='Submit Review', disabled=disable_fields)
         if submitted:
             # Validate input length
-            if len(liked) < 10 or len(disliked) < 9: #add more sections here
+            if len(liked) < 10 or len(disliked) <= 0 or len(what_they_ate) < 10: #add more sections here
                 st.error("Your feedback must be at least 10 characters long.")
                 return
 
             # Filter out bad words
-            prohibited_words = ["slur1", "slur2", "slur3"]
+            prohibited_words = ["fuck", "bitch", "slur3"]
             if any(word in liked.lower() for word in prohibited_words) or any(word in disliked.lower() for word in prohibited_words): #add more sections here
                 st.error("Your feedback contains inappropriate language.")
                 return
@@ -144,34 +148,36 @@ def main():
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             # Store the data in the database, including the user UUID, meal, and timestamp
-            cursor.execute("INSERT INTO reviews (user_uuid, timestamp, meal, rating, liked, disliked) VALUES (?, ?, ?, ?, ?, ?)",
-                        (user_uuid, timestamp, current_meal, rating, liked, disliked))
+            cursor.execute("INSERT INTO reviews (user_uuid, timestamp, meal, rating, liked, disliked, what_they_ate) VALUES (?, ?, ?, ?, ?, ?)",
+                        (user_uuid, timestamp, current_meal, rating, liked, disliked, what_they_ate))
             conn.commit()  # Commit the transaction to save the data
 
             # Set a cookie to indicate that the user has submitted a review for this meal today
             cookie_manager.set(f"{datetime.date.today()}_{current_meal}", "submitted", max_age=72000)
 
             st.toast('Submitting...')
-            conn.close()
             time.sleep(3)
             st.toast('Review sucessfully submitted.', icon='✔')
             time.sleep(2)
-           # st.rerun()
+            st.rerun()
     
     if not is_mealtime(current_meal):
         st.warning("It's not mealtime. You can't submit a review right now. Come back later!")
     elif meal_cookie_exists:
-        st.info("You have already submitted a review for this meal today.")
+        st.info(f"You have already submitted a review for {this_meal} today. Send feedback to O&M Dining directly:")
+        col1, col2, col3 = st.columns(3)
+        col2.link_button("O&M Dining Survey", "https://oursu.susqu.org/dining/survey", type="secondary")
+
 
     #Debug
-    st.write(submitted)
-    st.write(f"disable_fields: {disable_fields}")
-    st.write(f"{datetime.date.today()}_{current_meal}")
-    st.write(cookie_manager.get(cookie="2023-10-02_Dinner"))
-    st.write(f"meal_cookie: {meal_cookie}")
-    st.write(f"meal_cookie_exists: {meal_cookie_exists}")
-    st.write(cookie_manager.get(cookie=f"{datetime.date.today()}_{current_meal}") == None)
-    st.write(f"submitted_for_meal: {submitted_for_meal}")
+    #st.write(submitted)
+    #st.write(f"disable_fields: {disable_fields}")
+    #st.write(f"{datetime.date.today()}_{current_meal}")
+    #st.write(cookie_manager.get(cookie="2023-10-02_Dinner"))
+    #st.write(f"meal_cookie: {meal_cookie}")
+    #st.write(f"meal_cookie_exists: {meal_cookie_exists}")
+    #st.write(cookie_manager.get(cookie=f"{datetime.date.today()}_{current_meal}") == None)
+    #st.write(f"submitted_for_meal: {submitted_for_meal}")
 
 
 if __name__ == "__main__":
