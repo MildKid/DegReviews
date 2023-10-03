@@ -1,3 +1,4 @@
 extra_streamlit_components==0.1.60
 matplotlib==3.8.0
+pytz==2023.3.post1
 streamlit_nightly==1.26.1.dev20230919
